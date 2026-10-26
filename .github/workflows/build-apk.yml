@@ -1,0 +1,126 @@
+name: Build & Release Debug APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish as GitHub Release with downloadable APK'
+        type: boolean
+        default: true
+        required: false
+      release_tag:
+        description: 'Custom release tag (e.g. v1.0.0; leave blank for automatic tag)'
+        type: string
+        default: ''
+        required: false
+      release_title:
+        description: 'Custom release title'
+        type: string
+        default: 'ZAVRANGO BOOST — Debug APK'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Prepare Keystore and Environment
+        run: |
+          chmod +x gradlew
+          touch .env
+          if [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
+            echo "Restoring debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+          if [ ! -f debug.keystore ]; then
+            echo "Generating fallback debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK Artifacts
+        run: |
+          mkdir -p release-artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk release-artifacts/ZAVRANGO-BOOST-debug.apk
+          echo "APK generated successfully at release-artifacts/ZAVRANGO-BOOST-debug.apk"
+          ls -lh release-artifacts/
+
+      - name: Upload APK to Workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zavrango-boost-debug-apk
+          path: release-artifacts/ZAVRANGO-BOOST-debug.apk
+          retention-days: 90
+
+      - name: Generate Release Tag Name
+        id: release_info
+        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+        run: |
+          if [ -n "${{ github.event.inputs.release_tag }}" ]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="v1.0.${{ github.run_number }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Releases
+        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: ${{ github.event.inputs.release_title != '' && github.event.inputs.release_title || format('ZAVRANGO BOOST {0}', steps.release_info.outputs.tag) }}
+          body: |
+            ## 🚀 ZAVRANGO BOOST — Automated Android Debug APK Build
+
+            Native Android system optimization and gaming control center, specifically tailored for Samsung Galaxy M15 5G (6GB RAM, Android 16).
+
+            ### 📲 Download & Install APK:
+            1. Download the **`ZAVRANGO-BOOST-debug.apk`** attached below directly onto your Android device.
+            2. Open the downloaded file to install.
+            3. If prompted by Android/One UI, tap **Settings** and allow **Install unknown apps** for your browser or file manager.
+
+            ### ⚡ Included Features:
+            - **Gaming Control Center:** Cyber dark UI with neon-red accents and 5 core booster switches (Performance Mode, Touch Optimization, Precision Mode, Protection System, FPS Booster).
+            - **Game Launcher (`ABRIR FREE FIRE`):** Direct launch integration for Free Fire MAX and Free Fire with automated gaming focus profile.
+            - **Smart Performance Center:** Live RAM (6GB telemetry), flash storage, battery health, and temperature (°C) sensors.
+            - **Real-Time Display FPS Meter:** Choreographer hardware rendering frame rates & 90Hz refresh rate sync.
+            - **Notification Assistant:** Gaming Do Not Disturb (DND) priority filter & interruption prevention.
+            - **Touch & Smoothness Testing:** Interactive millisecond reaction-time reflex test & 5-second rapid tap challenge (CPS).
+            - **One-Tap SMART OPTIMIZE:** Diagnostic engine evaluating 6 device parameters with verified system shortcuts.
+
+            *Build triggered automatically by GitHub Actions workflow run #${{ github.run_number }}.*
+          files: release-artifacts/ZAVRANGO-BOOST-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

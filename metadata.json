@@ -1,0 +1,6 @@
+{
+  "name": "ZAVRANGO BOOST",
+  "description": "Native Android system optimization and gaming control center for Samsung Galaxy M15 5G.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
