@@ -55,6 +55,7 @@ import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonGreen
 import com.example.ui.theme.NeonRed
 import com.example.ui.theme.NeonRedBright
+import com.example.ui.theme.NeonRedMuted
 import com.example.ui.theme.PureBlack
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
@@ -263,9 +264,9 @@ fun NotificationControlScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // PER-APP NOTIFICATION SETTINGS BUTTON
+        // PER-APP NOTIFICATION SETTINGS & SELECTION
         Text(
-            text = "TARGETED NOTIFICATION CONTROL",
+            text = "ASSISTENTE POR APLICATIVO (SELEÇÃO RÁPIDA)",
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.Black,
                 color = TextRedAccent,
@@ -273,11 +274,85 @@ fun NotificationControlScreen(
                 fontSize = 12.sp
             )
         )
+        Text(
+            text = "Silencie notificações pop-up dos apps que interrompem suas partidas ranqueadas.",
+            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary, fontSize = 11.sp)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val distractionApps = listOf(
+            Triple("WhatsApp", "com.whatsapp", "Mensagens e chamadas pop-up"),
+            Triple("Discord", "com.discord", "Alertas de canais e menções"),
+            Triple("TikTok", "com.zhiliaoapp.musically", "Vídeos ao vivo e notificações"),
+            Triple("Instagram", "com.instagram.android", "Directs e notificações de stories"),
+            Triple("Telegram", "org.telegram.messenger", "Grupos e canais em segundo plano"),
+            Triple("YouTube", "com.google.android.youtube", "Recomendações e avisos de live")
+        )
+
+        distractionApps.forEach { (appName, pkgName, desc) ->
+            val isInstalled = viewModel.repository.isPackageInstalled(pkgName)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = appName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimary
+                            )
+                            if (isInstalled) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(NeonGreen.copy(alpha = 0.2f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Instalado", color = NeonGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                        Text(
+                            text = desc,
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { viewModel.openAppNotificationSettings(pkgName) },
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isInstalled) NeonRedMuted else DarkBorderHighlight),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isInstalled) NeonRedBright else TextSecondary
+                        ),
+                        modifier = Modifier.height(34.dp).testTag("notif_btn_${appName.lowercase()}")
+                    ) {
+                        Text(if (isInstalled) "Silenciar" else "Configurar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedButton(
             onClick = { viewModel.dispatchAction("NOTIFICATIONS") },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp).testTag("all_notifications_settings_btn"),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
             border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorderHighlight)
@@ -290,7 +365,7 @@ fun NotificationControlScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = NeonRed, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Manage Per-App Notification Pop-ups")
+                    Text("Abrir Todas as Notificações do Android")
                 }
                 Icon(imageVector = Icons.Default.OpenInNew, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
             }

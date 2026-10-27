@@ -1,48 +1,64 @@
 # ZAVRANGO BOOST — Native Android System Optimization App
 
+[![Build & Release Debug APK](https://github.com/zavrango889-oss/Zavrangovip/actions/workflows/build-apk.yml/badge.svg)](https://github.com/zavrango889-oss/Zavrangovip/actions/workflows/build-apk.yml)
+[![Latest Release](https://img.shields.io/github/v/release/zavrango889-oss/Zavrangovip?label=Download%20APK&color=FF1E44)](https://github.com/zavrango889-oss/Zavrangovip/releases)
+
 Real native Android system optimization and gaming control center, designed specifically for **Samsung Galaxy M15 5G (6GB RAM, Android 16)** and modern Android devices.
 
 ---
 
-## ⚡ Automated APK Builds via GitHub Actions
+## ⚡ Direct Download & Automated GitHub Releases
 
-This repository is pre-configured with a **GitHub Actions CI/CD workflow** (`.github/workflows/build-apk.yml`) that builds the debug APK automatically.
+Every push to this repository triggers the **GitHub Actions CI/CD workflow** (`.github/workflows/build-apk.yml`) to compile and publish the debug APK automatically.
 
-### 📥 How to Download the APK
+### 📥 Direct Download Links
 
-#### Option 1: GitHub Releases (Recommended — Direct Download)
-1. Go to the **Releases** section on the right side of your GitHub repository (or navigate to `https://github.com/<your-username>/<your-repo>/releases`).
-2. Under the latest release (e.g., `v1.0.1`), expand **Assets**.
-3. Click on **`ZAVRANGO-BOOST-debug.apk`** to download it directly to your phone or computer.
+* 📲 **[Download Latest APK from Releases](https://github.com/zavrango889-oss/Zavrangovip/releases)**
+  * Navigate to the latest release and click **`ZAVRANGO-BOOST-debug.apk`** under **Assets**.
+* ⚙️ **[View Build Status in GitHub Actions](https://github.com/zavrango889-oss/Zavrangovip/actions)**
+  * View build progress or download previous build artifacts under **Artifacts** (`zavrango-boost-debug-apk`).
 
-#### Option 2: GitHub Actions Artifacts
-1. Go to the **Actions** tab in your repository.
-2. Click on the latest workflow run: **"Build & Release Debug APK"**.
-3. Scroll down to the **Artifacts** section at the bottom of the summary page.
-4. Click on **`zavrango-boost-debug-apk`** to download the ZIP file containing the APK.
+---
 
-#### Option 3: Trigger a Manual Build Anytime
-1. Go to the **Actions** tab in your GitHub repository.
-2. Select **"Build & Release Debug APK"** from the left sidebar.
-3. Click the **"Run workflow"** button.
-4. Choose whether to publish a GitHub Release and enter an optional custom tag (e.g., `v1.0.0`), then click **"Run workflow"**.
+## 🚀 How to Push from AI Studio to GitHub
+
+If you are pushing this project from your machine or terminal to **`zavrango889-oss/Zavrangovip`**:
+
+```bash
+# 1. Add all project files
+git add .
+
+# 2. Commit the initial release
+git commit -m "feat: ZAVRANGO BOOST with GitHub Actions automated APK workflow"
+
+# 3. Ensure branch is main
+git branch -M main
+
+# 4. Push to your GitHub repository
+git push -u origin main
+```
+
+*(If pushing with a GitHub Personal Access Token or SSH key, enter your credentials when prompted).*
+
+Once pushed, GitHub Actions will immediately build the APK and publish it to [GitHub Releases](https://github.com/zavrango889-oss/Zavrangovip/releases).
 
 ---
 
 ## 📲 How to Install on Samsung Galaxy M15 5G
 
-1. Download **`ZAVRANGO-BOOST-debug.apk`** directly on your phone using Chrome/Samsung Internet, or transfer it from your PC via USB / Quick Share.
-2. Tap the downloaded `.apk` file from **My Files** or the browser notification bar.
-3. If prompted: **"For your security, your phone is not allowed to install unknown apps from this source"**:
+1. Open **[Releases](https://github.com/zavrango889-oss/Zavrangovip/releases)** on your phone's browser (Chrome or Samsung Internet).
+2. Download **`ZAVRANGO-BOOST-debug.apk`**.
+3. Tap the downloaded file in the browser downloads bar or inside the **My Files** app (`Internal storage/Download`).
+4. If Android displays: *"For your security, your phone is not allowed to install unknown apps from this source"*:
    - Tap **Settings**.
-   - Enable the toggle for **Allow from this source**.
-4. Tap **Install**, then tap **Open**.
+   - Turn **ON** the switch for **Allow from this source**.
+5. Tap **Install**, then tap **Open**.
 
 ---
 
-## 🎮 Key Features
+## 🎮 Features Included
 
-* **Gamer Control Center:** Premium cyber dark background with neon-red accents and 5 active optimization switches (Performance Mode, Touch Optimization, Precision Mode, Protection System, FPS Booster).
+* **Gamer Control Center:** Premium cyber dark background (`#07070A`) with neon-red accents and 5 active optimization switches (Performance Mode, Touch Optimization, Precision Mode, Protection System, FPS Booster).
 * **Game Launcher (`ABRIR FREE FIRE`):** Direct launch shortcut for Free Fire MAX and Free Fire with automated gaming focus profile.
 * **Smart Performance Center:** Live hardware telemetry using Android system APIs for 6GB RAM, internal flash storage, and battery temperature (°C).
 * **FPS & Game Performance:** Real-time display render frame meter using Android `Choreographer` and Samsung GPUWatch / Perf Z guide.

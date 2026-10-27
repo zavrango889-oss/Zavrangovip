@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ZAVRANGO BOOST"
+rootProject.name = "ZAVRANGOFFZ"
 
 include(":app")

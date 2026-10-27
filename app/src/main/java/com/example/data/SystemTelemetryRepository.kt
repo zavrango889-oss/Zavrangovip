@@ -537,4 +537,48 @@ class SystemTelemetryRepository(private val context: Context) {
         }
         return size
     }
+
+    fun openAppNotificationSettings(packageName: String): Boolean {
+        return try {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            true
+        } catch (_: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
+    }
+
+    suspend fun checkNetworkPingMs(): Pair<Int, String> {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            try {
+                val socket = java.net.Socket()
+                val socketAddress = java.net.InetSocketAddress("8.8.8.8", 53)
+                socket.connect(socketAddress, 1500)
+                socket.close()
+                val elapsed = (System.currentTimeMillis() - startTime).toInt()
+                val status = when {
+                    elapsed < 50 -> "Optimal Esports Ping (<50ms)"
+                    elapsed < 90 -> "Good Gaming Latency"
+                    elapsed < 140 -> "Acceptable Latency"
+                    else -> "High Latency ($elapsed ms)"
+                }
+                Pair(elapsed, status)
+            } catch (e: Exception) {
+                Pair(-1, "Network offline or unreachable")
+            }
+        }
+    }
 }

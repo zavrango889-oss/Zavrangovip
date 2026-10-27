@@ -1,7 +1,6 @@
 package com.example.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -10,16 +9,16 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
+private val DarkNavyColorScheme = darkColorScheme(
     primary = NeonRed,
     onPrimary = PureBlack,
     primaryContainer = NeonRedMuted,
     onPrimaryContainer = TextPrimary,
-    secondary = NeonRedBright,
+    secondary = CyberBlueNeon,
     onSecondary = PureBlack,
-    secondaryContainer = DarkSurfaceVariant,
+    secondaryContainer = DarkNavyCardElevated,
     onSecondaryContainer = TextPrimary,
-    tertiary = NeonCyan,
+    tertiary = CyberBlueBright,
     background = DarkBackground,
     onBackground = TextPrimary,
     surface = DarkSurface,
@@ -33,7 +32,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun ZavrangoBoostTheme(
+fun ZavrangoOffzTheme(
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
@@ -51,8 +50,13 @@ fun ZavrangoBoostTheme(
     }
 
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = DarkNavyColorScheme,
         typography = Typography,
         content = content
     )
 }
+
+@Composable
+fun ZavrangoBoostTheme(
+    content: @Composable () -> Unit
+) = ZavrangoOffzTheme(content)

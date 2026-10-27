@@ -25,10 +25,16 @@ import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -54,6 +60,8 @@ import com.example.ui.components.CyberCard
 import com.example.ui.components.CyberToggleCard
 import com.example.ui.components.GamerActionButton
 import com.example.ui.components.MetricGaugesRow
+import com.example.ui.theme.CyberBlueBright
+import com.example.ui.theme.CyberBlueNeon
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkBorder
 import com.example.ui.theme.DarkBorderHighlight
@@ -74,6 +82,7 @@ import com.example.viewmodel.BoosterViewModel
 @Composable
 fun ControlCenterScreen(
     viewModel: BoosterViewModel,
+    onNavigateToSensi: () -> Unit,
     onNavigateToSmartCheck: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -83,6 +92,9 @@ fun ControlCenterScreen(
     val deviceInfo by viewModel.deviceInfo.collectAsState()
     val currentFps by viewModel.realtimeFps.collectAsState()
     val statusMsg by viewModel.statusMessage.collectAsState()
+    val pingMs by viewModel.pingMs.collectAsState()
+    val pingStatus by viewModel.pingStatus.collectAsState()
+    val isPinging by viewModel.isPinging.collectAsState()
 
     val isFreeFireMax = viewModel.repository.isFreeFireMaxInstalled()
     val isFreeFireStd = viewModel.repository.isFreeFireStandardInstalled()
@@ -99,318 +111,342 @@ fun ControlCenterScreen(
             .fillMaxSize()
             .background(DarkBackground)
             .verticalScroll(scrollState)
-            .padding(horizontal = 18.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
             .testTag("control_center_screen")
     ) {
-        // VIP Header matching the user screenshot
+        // TOP BAR WITH AVATAR / VIP TAG & ONLINE BADGE (from reference screenshots)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Demon/Gamer Avatar with glowing neon red ring
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Profile Avatar with Neon Glow
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(46.dp)
                         .clip(CircleShape)
-                        .background(DarkSurfaceVariant)
                         .border(2.dp, NeonRed, CircleShape)
-                        .padding(2.dp),
+                        .background(DarkSurfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.zavrango_logo),
-                        contentDescription = "Gamer Avatar",
+                        contentDescription = "ZAVRANGOFFZ Avatar",
                         modifier = Modifier
-                            .fillMaxSize()
+                            .size(42.dp)
                             .clip(CircleShape)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "ZAVRANGO",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
-                                color = TextPrimary,
-                                fontSize = 18.sp,
-                                letterSpacing = 0.5.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(NeonRed)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "VIP",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    fontSize = 10.sp
-                                )
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = if (deviceInfo.isSamsungGalaxyM15) "Galaxy M15 5G • Acesso permanente" else "${deviceInfo.model} • Acesso permanente",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextSecondary,
-                            fontSize = 12.sp
+                        text = "ZAVRANGOFFZ",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            color = TextPrimary,
+                            letterSpacing = 1.sp,
+                            fontSize = 16.sp
                         )
                     )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(CyberBlueNeon)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "SISTEMA ONLINE • M15 5G",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = CyberBlueNeon,
+                                fontSize = 10.sp
+                            )
+                        )
+                    }
                 }
             }
 
-            // Status chip
+            // Ping Badge
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { viewModel.runPingCheck() }
+                    .testTag("ping_status_badge"),
                 color = DarkSurface,
-                border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorderHighlight)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(NeonGreen)
+                    Icon(
+                        imageVector = Icons.Default.NetworkCheck,
+                        contentDescription = "Ping",
+                        tint = if ((pingMs ?: 999) < 60) NeonGreen else CyberBlueNeon,
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "ONLINE",
+                        text = if (isPinging) "..." else if (pingMs != null) "${pingMs}ms" else "Ping",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = NeonGreen,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp
+                            color = TextPrimary,
+                            fontSize = 11.sp
                         )
                     )
                 }
             }
         }
 
-        // Live Telemetry bar
-        Spacer(modifier = Modifier.height(12.dp))
-        MetricGaugesRow(
-            ramText = "${String.format("%.1f", memoryInfo.availableRamGb)} GB Free",
-            ramPct = memoryInfo.usedPercentage,
-            tempText = "${batteryInfo.temperatureCelsius}°C",
-            tempCategory = batteryInfo.thermalStateCategory,
-            fpsText = "$currentFps FPS"
-        )
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Status banner if any
+        // STATUS TOAST (dismissible)
         if (statusMsg != null) {
-            Spacer(modifier = Modifier.height(12.dp))
             Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .testTag("status_toast"),
                 color = DarkSurfaceVariant,
-                border = androidx.compose.foundation.BorderStroke(1.dp, NeonRed.copy(alpha = 0.5f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, NeonRedGlow)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = NeonRed,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = statusMsg ?: "",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextPrimary,
-                                fontSize = 12.sp
-                            )
-                        )
-                    }
+                    Text(
+                        text = statusMsg ?: "",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
                     IconButton(
                         onClick = { viewModel.clearStatusMessage() },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = "Fechar",
                             tint = TextMuted,
                             modifier = Modifier.size(16.dp)
                         )
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // Section Title
-        Text(
-            text = "GAMING CONTROL CENTER",
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.Black,
-                color = TextRedAccent,
-                letterSpacing = 1.sp,
-                fontSize = 12.sp
-            )
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // THE 5 TOGGLES MATCHING THE SCREENSHOT EXACTLY
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // 1. Performance Mode
-            CyberToggleCard(
-                title = "Performance Mode",
-                subtitle = "Melhora estabilidade e desempenho do dispositivo",
-                icon = Icons.Default.Bolt,
-                isChecked = boosterPrefs.performanceMode,
-                onCheckedChange = { viewModel.togglePerformanceMode(it) },
-                testTag = "toggle_performance_mode"
-            )
-
-            // 2. Touch Optimization
-            CyberToggleCard(
-                title = "Touch Optimization",
-                subtitle = "Otimização de resposta do toque na tela",
-                icon = Icons.Default.Fingerprint,
-                isChecked = boosterPrefs.touchOptimization,
-                onCheckedChange = { viewModel.toggleTouchOptimization(it) },
-                testTag = "toggle_touch_optimization"
-            )
-
-            // 3. Precision Mode
-            CyberToggleCard(
-                title = "Precision Mode",
-                subtitle = "Ajustes avançados de controle e precisão",
-                icon = Icons.Default.CenterFocusStrong,
-                isChecked = boosterPrefs.precisionMode,
-                onCheckedChange = { viewModel.togglePrecisionMode(it) },
-                testTag = "toggle_precision_mode"
-            )
-
-            // 4. Protection System
-            CyberToggleCard(
-                title = "Protection System",
-                subtitle = "Sistema de proteção e estabilidade térmica",
-                icon = Icons.Default.Security,
-                isChecked = boosterPrefs.protectionSystem,
-                onCheckedChange = { viewModel.toggleProtectionSystem(it) },
-                testTag = "toggle_protection_system"
-            )
-
-            // 5. FPS Booster
-            CyberToggleCard(
-                title = "FPS Booster",
-                subtitle = "Otimização para maior taxa de quadros e sincronização",
-                icon = Icons.Default.RocketLaunch,
-                isChecked = boosterPrefs.fpsBooster,
-                onCheckedChange = { viewModel.toggleFpsBooster(it) },
-                testTag = "toggle_fps_booster"
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Primary Action Button matching user screenshot: "▶ ABRIR FREE FIRE"
-        GamerActionButton(
-            text = gameTitle,
-            icon = Icons.Default.PlayArrow,
-            onClick = { viewModel.launchGameOrStore() },
-            testTag = "btn_abrir_free_fire"
+        // REAL TELEMETRY GAUGES (RAM 6GB, Battery %, Temp °C, FPS)
+        MetricGaugesRow(
+            memoryInfo = memoryInfo,
+            batteryInfo = batteryInfo,
+            currentFps = currentFps,
+            targetFps = boosterPrefs.targetFps,
+            refreshRateHz = deviceInfo.refreshRateHz
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Quick Assistant Bar
+        // FREE FIRE MAX STATUS BADGE
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isFreeFireMax || isFreeFireStd) NeonGreen else TextMuted)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isFreeFireMax) "FREE FIRE MAX DETECTADO" else if (isFreeFireStd) "FREE FIRE DETECTADO" else "FREE FIRE NÃO DETECTADO",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFreeFireMax || isFreeFireStd) NeonGreen else TextMuted,
+                        fontSize = 11.sp
+                    )
+                )
+            }
+
+            Text(
+                text = "Samsung One UI 7",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = TextMuted,
+                    fontSize = 10.sp
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // BIG RED ACTION BUTTON: "ABRIR FREE FIRE" (From reference screenshot)
+        GamerActionButton(
+            text = gameTitle,
+            icon = Icons.Default.PlayArrow,
+            onClick = { viewModel.launchGameOrStore() },
+            modifier = Modifier.testTag("launch_free_fire_main_btn")
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // SECTION: CONTROLS & TOGGLES (Inspired by reference screenshot)
+        Text(
+            text = "PAINEL DE CONTROLE GAMER",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = TextSecondary,
+                letterSpacing = 1.sp
+            )
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 1. Performance Mode Toggle
+        CyberToggleCard(
+            title = "Performance Mode",
+            subtitle = "Melhora estabilidade, compacta memória e reduz latência",
+            icon = Icons.Default.Bolt,
+            isChecked = boosterPrefs.performanceMode,
+            onCheckedChange = { viewModel.togglePerformanceMode(it) },
+            testTag = "toggle_performance_mode"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 2. Touch Optimization Toggle
+        CyberToggleCard(
+            title = "Touch Optimization",
+            subtitle = "Otimização de resposta do toque na tela Super AMOLED",
+            icon = Icons.Default.Fingerprint,
+            isChecked = boosterPrefs.touchOptimization,
+            onCheckedChange = { viewModel.toggleTouchOptimization(it) },
+            testTag = "toggle_touch_optimization"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 3. Precision Mode Toggle
+        CyberToggleCard(
+            title = "Precision Mode",
+            subtitle = "Ajustes avançados de controle, DPI e mira estrita 0-200",
+            icon = Icons.Default.CenterFocusStrong,
+            isChecked = boosterPrefs.precisionMode,
+            onCheckedChange = { viewModel.togglePrecisionMode(it) },
+            testTag = "toggle_precision_mode"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 4. Protection System Toggle
+        CyberToggleCard(
+            title = "Protection System",
+            subtitle = "Monitor térmico do Dimensity 6100+ para evitar thermal throttling",
+            icon = Icons.Default.Shield,
+            isChecked = boosterPrefs.protectionSystem,
+            onCheckedChange = { viewModel.toggleProtectionSystem(it) },
+            testTag = "toggle_protection_system"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 5. FPS Booster Toggle
+        CyberToggleCard(
+            title = "FPS Booster (90Hz)",
+            subtitle = "Alinhamento com taxa de atualização da tela Super AMOLED",
+            icon = Icons.Default.RocketLaunch,
+            isChecked = boosterPrefs.fpsBooster,
+            onCheckedChange = { viewModel.toggleFpsBooster(it) },
+            testTag = "toggle_fps_booster"
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // QUICK SHORTCUT CARDS: Sensi Generator & Smart Diagnostic
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            CyberCard(
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToSmartCheck
+            // Sensi Generator Quick Card
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onNavigateToSensi)
+                    .testTag("quick_sensi_card"),
+                shape = RoundedCornerShape(14.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBlueNeon.copy(alpha = 0.4f))
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Icon(
-                        imageVector = Icons.Default.CleaningServices,
+                        imageVector = Icons.Default.Tune,
                         contentDescription = null,
-                        tint = NeonRed,
-                        modifier = Modifier.size(20.dp)
+                        tint = CyberBlueBright,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "SMART CHECK",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        )
-                        Text(
-                            text = "Auto Diagnose",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSecondary,
-                                fontSize = 10.sp
-                            )
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "GERADOR SENSI",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Escala 0–200 FF MAX",
+                        fontSize = 10.sp,
+                        color = TextSecondary
+                    )
                 }
             }
 
-            CyberCard(
-                modifier = Modifier.weight(1f),
-                onClick = { viewModel.dispatchAction("DEVICE_CARE") }
+            // Smart Diagnostic Quick Card
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onNavigateToSmartCheck)
+                    .testTag("quick_diagnostic_card"),
+                shape = RoundedCornerShape(14.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, NeonRedGlow)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Icon(
-                        imageVector = Icons.Default.Shield,
+                        imageVector = Icons.Default.CleaningServices,
                         contentDescription = null,
-                        tint = NeonGreen,
-                        modifier = Modifier.size(20.dp)
+                        tint = NeonRedBright,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "SAMSUNG CARE",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        )
-                        Text(
-                            text = "Deep Sleep Apps",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSecondary,
-                                fontSize = 10.sp
-                            )
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "SMART CHECK",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Diagnóstico do M15 5G",
+                        fontSize = 10.sp,
+                        color = TextSecondary
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
